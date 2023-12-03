@@ -1,0 +1,7 @@
+*copy.*
+*.pid
+*.cfg
+*.db
+logs/*
+__pycache__
+py_env
