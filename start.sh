@@ -2,8 +2,6 @@
 
 source py_env/bin/activate
 
-# Init DB and create
-bash createUser.sh 
 # Start minio instance and send it to bacckground
 bash ./minio/startMinio.sh
 # Start Apache airflow webserver and send it to background
