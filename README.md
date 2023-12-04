@@ -126,3 +126,8 @@ To sum up this research, it explores whether Apache Airflow is the proper tool t
 > Chat-GPT 3.5 Response:
 >
 > Certainly! For beginners looking for an easy-to-use tool for building machine learning pipelines, Prefect is a good choice. It is designed with simplicity in mind, has a Python-native syntax, and offers a straightforward approach to building and orchestrating workflows. Prefect also has good documentation and is gaining traction in the data engineering and machine learning communities.
+
+## Sources that helped this research
+- [R3E -An Approach to Robustness, Reliability, Resilience and Elasticity Engineering for End-to-End Machine Learning Systems](https://www.researchgate.net/publication/341762862_R3E_-An_Approach_to_Robustness_Reliability_Resilience_and_Elasticity_Engineering_for_End-to-End_Machine_Learning_Systems)
+- [Benchmarking big data systems: A survey](https://www.sciencedirect.com/science/article/abs/pii/S0140366419312344)
+- [Aalto CS-E4660 - Advanced Topics in Software Systems](https://github.com/rdsea/sys4bigml)

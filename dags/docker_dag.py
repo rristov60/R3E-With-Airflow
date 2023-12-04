@@ -57,7 +57,7 @@ def build_image(**kwargs):
     image, build_logs = client.images.build(
         path="/home/riste/Documents/Aalto/Advanced_Topic_CS/ApacheAirflow/Docker/IoT-Temp",
         tag=f'train_out:{kwargs["ds"]}',
-        buildargs={'PICKLE_FILE_PATH': '/home/riste/Documents/Aalto/Advanced_Topic_CS/ApacheAirflow/Docker/IoT-Temp/model.pkl', 'PORT': '8080'}
+        buildargs={'PICKLE_FILE_PATH': '/home/riste/Documents/Aalto/Advanced_Topic_CS/ApacheAirflow/Docker/IoT-Temp/model.pkl', 'PORT': '8083'}
     )
     
 def stop_and_delete_container(**kwargs):

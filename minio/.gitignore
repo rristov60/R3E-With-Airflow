@@ -1,1 +1,3 @@
 airflow
+.minio.sys
+.minio.*

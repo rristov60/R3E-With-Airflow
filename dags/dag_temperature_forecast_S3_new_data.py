@@ -158,11 +158,8 @@ def train_out(**kwargs):
 
 # Data preparation
 def data_prep(**kwargs):
-    global risteVariable
-    print(risteVariable)
     key = kwargs['ti'].xcom_pull(task_ids='preprocess_data', key=f"{kwargs['dag'].dag_id}_{kwargs['ds']}")
     s3_hook = S3Hook(aws_conn_id='minio')
-    print(key)
     s3_object = s3_hook.get_key(key=key, bucket_name="airflow")
     data = s3_object.get()['Body'].read().decode('utf-8')
     df = pd.read_csv(StringIO(data))
