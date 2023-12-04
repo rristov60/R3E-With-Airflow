@@ -1,8 +1,9 @@
 # Robustness, Resilience, Reliability and Elasticity (R3E) for ML pipelines with Apache Airflow
 
 ## Startup instructions
-Prerequisites for this project are Apache Airflow, PostgreSQL, and minio. After these prerequisites are installed, just run the following command
+Prerequisites for this project are Apache Airflow, PostgreSQL, and minio. After these prerequisites are installed, just run the following command(s)
 ```bash
+$ bash init.sh # if running the first time
 $ bash start.sh
 ```
 
@@ -129,5 +130,5 @@ To sum up this research, it explores whether Apache Airflow is the proper tool t
 
 ## Sources that helped this research
 - [R3E -An Approach to Robustness, Reliability, Resilience and Elasticity Engineering for End-to-End Machine Learning Systems](https://www.researchgate.net/publication/341762862_R3E_-An_Approach_to_Robustness_Reliability_Resilience_and_Elasticity_Engineering_for_End-to-End_Machine_Learning_Systems)
-- [Benchmarking big data systems: A survey](https://www.sciencedirect.com/science/article/abs/pii/S0140366419312344)
 - [Aalto CS-E4660 - Advanced Topics in Software Systems](https://github.com/rdsea/sys4bigml)
+- [Benchmarking big data systems: A survey](https://www.sciencedirect.com/science/article/abs/pii/S0140366419312344)
