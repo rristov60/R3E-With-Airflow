@@ -1,10 +1,16 @@
-# Robustness, Resilience, Reliability and Elasticity (R3E) for ML pipelines with Apache Airflow
+# Robustness, Resilience, Reliability, and Elasticity (R3E) for Big Data ML pipelines with Apache Airflow
 
 ## Startup instructions
-Prerequisites for this project are Apache Airflow, PostgreSQL, and minio. After these prerequisites are installed, just run the following command(s)
+Prerequisites:
+- Apache Airflow
+- PostgreSQL 
+- MinIO. 
+
+After the installation of these prerequisites, the following commands can be run:
+
 ```bash
-$ bash init.sh # if running the first time
-$ bash start.sh
+$ bash init.sh # For initializing Apache Airflow DB and creating an initial admin user 
+$ bash start.sh # Running MinIO, Airflow Webserver, and Airflow Scheduler 
 ```
 
 ### Content
@@ -15,38 +21,22 @@ $ bash start.sh
 
 
 ## 1. Introduction
-In this modern, technology-thriving world, each day we hear about new Artificial Intelligence (AI) projects and(or) products. We are currently experiencing a revolution in the technology world, where AI is becoming more popular than ever. A few types of AI exist, such as narrow AI, general AI, reactive machines, and "Theory of Mind" AI. I will not go into details with this, because it is out of the scope of this research/experiment. However, I will mention that the AI we have available as of today is narrow AI, which is trained to perform specific tasks. The best example of this is Chat-GPT. Furthermore, the key component that enables narrow AI is Machine Learning (ML). ML involves algorithms that enable one system to perform a task without being programmed specifically. This kind of system is designed to make predictions, recognize patterns, and improve based on data. To have a reasonably good ML system, whose most common use case is prediction or pattern recognition, a big dataset is required to train an ML model. ML model is the final structure where the result from an ML system is stored. The ML model is used to make the prediction or recognize the pattern, and the bigger the dataset the more accurate the ML model will be. There are a few caveats with that as well, however, that is out of the scope of this research.
-The process of training an ML model is usually automated using an ML pipeline, which is a collection of automated processes such as collection of data, preparation of data, training an ML model, and deploying it. Sometimes these pipelines can be used also for monitoring the performance of the ML model, and automatically train a new one when a better dataset is available. When building an ML pipeline, it is important to consider a few aspects, i.e. the pipeline needs to be robust, resilient, reliable, and elastic. For a pipeline to be robust, it needs to be able to perform when exposed to sub-ideal circumstances; for a pipeline to be resilient, it needs to be able to handle unexpected errors and recover from them; for a pipeline to be reliable it needs to be consistent and dependable; and for a pipeline to be elastic it needs to have the ability to be dynamically scaled. This research explores whether these key aspects of an ML pipeline can be achieved using Apache Airflow.
-
+Artificial Intelligence (AI) projects and(or) products are thriving more than ever. The best example of this is OpenAI's Chat-GPT with how it changed the world. The key component that enables engineers to develop such projects is called Machine Learning (ML). ML is just a collection of algorithms that use various amounts of data to train an ML model which is later used to perform a certain task. Due to the nature of this process and the fact that for a good model, huge amounts of data are required, the model training process needs to be broken into smaller steps, such as data formatting, preprocessing the data, training the model, testing the model, deploying the model, and distributing it. Furthermore, these steps are usually organized in pipelines and each step is a certain stage in the pipeline, for the pipeline execution to be successful, each task or rather the whole pipeline needs to have certain properties such as robustness, resilience, reliability, and elasticity (R3E). The vast amount of data used in this kind of pipeline is known as Big Data. This research explores whether the aforementioned properties can be achieved using Apache Airflow for Big Data ML pipelines. 
 
 ## 2. Related Technology
-What is Apache Airflow? According to their [website](https://airflow.apache.org/docs/apache-airflow/stable/index.html), "Apache Airflow is an open-source platform for developing, scheduling, and monitoring batch-oriented workflows". Airflow is based on Python, and all of the pipelines in Airflow are configured as Python code, which means that any Python modules can be used in the pipeline. This makes it a good candidate for making an ML pipeline because almost all ML models that are used today are trained in Python. After all, Python offers a lot of modules that ease the training process. Airflow uses the principle "workflows as code", which means that all of the workflows are defined as code. This from the start makes it more of a tool that can be used by AI engineers or software engineers in general, rather than a tool for pipeline designers. This approach, according to Airflow's website, "serves several purposes":
+What is Apache Airflow? According to their [website](https://airflow.apache.org/docs/apache-airflow/stable/index.html), "Apache Airflow is an open-source platform for developing, scheduling, and monitoring batch-oriented workflows". Airflow is based on Python, which means that almost all Python modules can be utilized. This makes it an excellent tool for creating ML pipelines. Airflow uses a principle called "workflows as code", which means that all of the workflows are defined as code. The approach "workflow as code", according to Airflow's website, "serves several purposes":
 
-- **Dynamic** - All pipelines as mentioned are configured as Python code, which according to them allows dynamic pipeline generation, but I disagree. At least in the context of this research
-- **Extensible** - "The Airflow™ framework contains operators to connect with numerous technologies. All Airflow components are extensible to easily adjust to your environment.". I partially agree with this, since Airflow indeed offers operators, but the interoperability between them is quite harder than it should be and it is more of hacking stuff than real interoperability. Again, this is in the context of this research
-- **Flexible** - "Workflow parameterization is leveraging the built-in [Jinja](https://jinja.palletsprojects.com/) templating engine.". Jinja's templated engine is something that I didn't experiment with. 
+- **Dynamic** - All pipelines are configured as Python code, which allows dynamic pipeline generation
+- **Extensible** - "The Airflow™ framework contains operators to connect with numerous technologies. All Airflow components are extensible to easily adjust to your environment."
+- **Flexible** - "Workflow parameterization is leveraging the built-in [Jinja](https://jinja.palletsprojects.com/) templating engine.".
 
 ### Apache Airflow architecture
 A workflow in Airflow is represented as a **DAG**(Directed Acycling Graph) which is comprised of tasks. These tasks are "arranged with dependencies and data flows taken into account". Below is a small diagram from an example DAG taken from Airflow's website:
 
 #### **Figure 1.** Example DAG diagram
-![Figure 1. Example DAG diagram](./figures/figure1.png) 
+![Figure 1. Example DAG diagram](./figures/Figure1.png) 
 
-The DAG describes the order in which tasks are executed (also known as tasks flow), task run retries, and the dependencies between the tasks within the DAG. The tasks on the other hand describe the actual operation, i.e. code execution. Each task can be an instance of a certain operator. Operator in Airflow defines what kind of script or code is being executed. For example, there is __BashOperator__ which executes bash scripts, and __PythonOperator__ which executes Python code. Tasks' capabilities can be further extended with so-called providers. The providers are Python packages that extend the core of Apache Airflow, thus extending the tasks' capabilities.
-
-Airflow as a whole, consists of multiple components:
-- **Scheduler** - handles the workflows scheduling and triggering, and submitting the tasks to the executor. Multiple types of schedulers differ for example whether the task execution is sequential or there can be parallel task execution 
-- **Executor** - runs tasks. In a default configuration, all of the tasks are run "inside" the scheduler, but in a real production environment, the executor pushes task execution to external workers
-- **Webserver** - Airflow's UI used to inspect, trigger, and debug DAGs and tasks
-- **Folder of DAG files**
-- **Metadata Database** - used for storing states by the scheduler, executor, and the web server
-
-#### **Figure 2.** Airflow Infrastructure
-![Figure 2. Airflow Infratrcutre](./figures/figure2.png)
-
-When running airflow, there is an automatically generated file called `airflow.cfg`, which is the configuration file for Airflow and all of its components. For further reference on how Airflow is installed please see [the official documentation](https://airflow.apache.org/docs/). For how a database is initialized, and how the components are run, please see `start.sh` located in the root folder of this project or [the official documentation](https://airflow.apache.org/docs/).
-
-Below is an example of DAG which has two tasks and two operators. 
+The DAG describes the order in which tasks are executed (also known as tasks flow), task run retries, and the dependencies between the tasks within the DAG. The tasks on the other hand describe the actual operation, i.e. code execution. Each task can be an instance of a certain operator. Operator in Airflow defines what kind of script or code is being executed. For example, there is __BashOperator__ which executes bash scripts, and __PythonOperator__ which executes Python code. Tasks' capabilities can be further extended with so-called providers. The providers are Python packages that extend the core of Apache Airflow, thus extending the tasks' capabilities. Following is an example of DAG:
 ```python
 # Imports
 from airflow import DAG
@@ -88,47 +78,131 @@ with DAG(
     python_task.set_downstream(bash_task) # or python_task >> bash_task
 ```
 
-<!-- Talk About Minio  -->
+Airflow as a whole, consists of multiple components:
+- **Scheduler** - handles the workflows scheduling and triggering, and submitting the tasks to the executor. Multiple types of schedulers differ for example whether the task execution is sequential or there can be parallel task execution 
+- **Executor** - runs tasks. In a default configuration, all of the tasks are run "inside" the scheduler, but in a real production environment, the executor pushes task execution to external workers
+- **Webserver** - Airflow's UI used to inspect, trigger, and debug DAGs and tasks
+- **Folder of DAG files**
+- **Metadata Database** - used for storing states by the scheduler, executor, and the web server
+
+#### **Figure 2.** Airflow Infrastructure
+![Figure 2. Airflow Infratrcutre](./figures/Figure2.png)
+
+When running airflow, there is an automatically generated file called `airflow.cfg`, which is the configuration file for Airflow and all of its components. For further reference on how Airflow is installed please see [the official documentation](https://airflow.apache.org/docs/). For how a database is initialized, and how the components are run, please see [`start.sh`](https://github.com/rristov60/R3E-With-Airflow/blob/main/start.sh) located in the root folder of this project or [the official documentation](https://airflow.apache.org/docs/).
+
+Before moving forward, a quick note should be made that in the context of this research the terms DAG and ML pipeline are interchangeable and are used with the same context.
+
 ### MinIO
-According to the MinIO's documentation, MinIO "is a high-performance, S3 compatible object store. It is built for large-scale AI/ML, data lake, and database workloads. It is software-defined and runs on any cloud or on-premises infrastructure". MinIO is used as S3 storage in this experiment. MinIO is AWS provider compatible, which means that Airflow does not require any additional configuration in order to be used with MinIO other than the default AWS-S3 one. I am not sure if there is something else that can be added to this other than [this documentation](https://min.io/docs/minio/linux/index.html) was followed for install and configuration.
+According to the MinIO's documentation, MinIO "is a high-performance, S3 compatible object store. It is built for large-scale AI/ML, data lake, and database workloads. It is software-defined and runs on any cloud or on-premises infrastructure". MinIO is used as S3 storage in this experiment. MinIO is AWS provider compatible, which means that Airflow does not require any additional configuration to be used with MinIO other than the default AWS-S3 one.
 
 ## 3. Apache Airflow for R3E
-Now when the reader is familiar with the general Airflow structure and the basic terms in ML, it is time to connect R3E with Airflow. As mentioned in the introduction, the main motivation for this paper is to explore whether airflow is a suitable tool for achieving the R3E for an ML pipeline. So first let's start with the pipeline. The pipeline used in this research is [_kohei-mu's_](https://www.kaggle.com/koheimuramatsu) project, [IoT Temperature Forecasting](https://www.kaggle.com/code/koheimuramatsu/iot-temperature-forecasting), which is transformed into full-blown ML pipeline per Airflow's specification, which means that the code from the Jupyter notebook is converted into tasks. On Figure 3. is shown the structure of the ML pipeline in Airflow:
+As mentioned in the introduction, the main motivation for this research is to explore whether Apache Airflow can be used to create a Big Data ML pipeline that is robust, resilient, reliable, and elastic. To research this, an example ML project was used which was transformed into a pipeline. The utilized project is  [IoT Temperature Forecasting](https://www.kaggle.com/code/koheimuramatsu/iot-temperature-forecasting) by [_kohei-mu_](https://www.kaggle.com/koheimuramatsu). The data used in this project is not typically considered big data. However, dummy data was added to the initial dataset so the data reached 5GBs. Again, this is not considered typical big data, but it suffices to prove a point. Figure 3. represents the structure of the ML pipeline. 
 
-#### **Figure 3.** Transfered project as pipeline in airflow
-![Figure 3. Transfered project as pipeline in airflow](./figures/Figure3.png)
+#### **Figure 3.** Airflow ML pipeline
+![Figure 3. Airflow ML pipeline](./figures/Figure3.png)
 
-Now, this is just a project transfer and it is not a complete ML pipeline from beginning to end. Transforming this into a real ML pipeline was difficult and time-consuming task. First, to make this a full ML pipeline, some data fetching mechanism is needed, which in this case is MinIO. To make S3 work with Airflow, the core of Airflow needs to be extended using the [AWS provider](https://airflow.apache.org/docs/apache-airflow-providers-amazon/stable/index.html). Airflow has a built-in mechanism for creating connections, so specifying the connection was a breeze. After installing the provider, there are two ways for the data fetching logic. The approach I took is to write a task, which is going to get the data from a S3 bucket and then process it as needed. The other possible approach is to basically write the same logic as a custom backend, and then utilize that. Now, the first issue is that when you try to download an object from S3, there is some default directory to which the airflow downloads it. That is fine, but when you specify a path in which you want to download the object, airflow still appends a temporary directory to the path. This is a random temporary directory, and there is no direct way to exclude it from the path. The only viable solution that I found was to match that directory with a wildcard, get the object from the directory, transfer it to the desired location, rename it as required, and clean up the temporary directory. This was not going to be that much of an issue if Airflow could pass data between tasks, which is the next issue.
+Apache Airflow has **no** direct way for passing data bigger than 48KB from one task to another. This requires some "out of the box" thinking on how the pipeline should be structured. The most common way to solve this challenge is to utilize an S3 instance with Airflow's [AWS provider](https://airflow.apache.org/docs/apache-airflow-providers-amazon/stable/index.html). 
 
-Apache Airflow has a very weird quirk, **no** direct way exists for passing data from one task to another. In my opinion, it does not make much sense to have this kind of data handling because if you are able to write a pipeline tasks in Python, you should be able to pass data between them, because at the end it is just a Python code. So it is better to illustrate with practical an example. The figure below is a complete pipeline that fetches data from S3, preprocesses it, prepares it for training, trains an ML model, saves the ML model as `.pkl`, and triggers another DAG for deploying the model.
+This challenges R3E because it introduces more dependencies which require additional managing and more potential failure points, hence making the R3E implementation more challenging.
 
-#### **Figure 4.** ML pipeline in Airflow
-![Figure 4. ML pipeline in Airflow](./figures/Figure4.png)
+The pipeline shown in Figure 3 consisted of several tasks, i.e. `start_task` - which is used as a trigger by another DAG just to start the pipeline, `preprocess_data` - which fetches raw data from an S3 instance, preprocesses it, and puts the result back into the same instance, `data_prep` - which fetches the result from the previous task from S3, prepares it for the training of the ML model and saves the prepared data back to S3, `train` - fetches the result from the previous task from S3, trains the model and saves it as `.pkl` in an S3 instance, `marked_current_data_as_processed` - which marks the current data as processed in S3 and deletes some obsolete files created during the whole process and finally `deploy_model` - which triggers deployment pipeline ([docker_dag.py](https://github.com/rristov60/R3E-With-Airflow/blob/main/dags/docker_dag.py)). The complete ML pipeline can be found in the following [file](https://github.com/rristov60/R3E-With-Airflow/blob/main/dags/dag_temperature_forecast_S3.py) in the dags folder in this repository.
 
-Each of these tasks naturally produces an output. Because of the inability to pass data directly from one task to another, the result from each task needs to be stored in S3. So, essentially each of the tasks makes two S3 requests, one for getting the result from the previous task from S3 and the other for uploading the current result to S3. That increases the workload on both the S3 instance and the machine that is running Airflow. From one viewpoint, this reduces the reliability because if a single upload fails, despite the task resulting in success, the pipeline will fail. On the other hand, it increases the robustness, because although there is too much unnecessary data passing, when a task fails, the task can retry and continue where it left off. Furthermore, robustness is increased with the automatic task retries, which allows the task to be retired **x** amount of times with a delay of **y** seconds. From this, I can say that **robustness** is a strong side of Apache Airflow and it is definitely easily achievable. 
+Now, let's take a look at achieving R3E using Airflow. 
 
-Now, let's focus on the **resilience**. The resilience is harder to achieve in Airflow than it needs to be because all of the error handling needs to be done manually inside the DAG. Now this would be more of a management question, who should write the DAGs for Airflow, a software/system engineer or a DevOps engineer? So far it looks like Airflow is designed for software/system engineers who happen to know DevOps, not for DevOps engineers.
+First is **robustness**. Airflow allows this to be easily achieved by the built-in `retries` and `retry_delay` properties for each DAG, which specify the number of retries for a single failed task from the DAG and the delay between each retry, respectively:
+```python
+with DAG(
+    owner='riste',
+    retries=5, # Maximum allowed retries
+    retry_delay=timedelta(minutes=5), # Delay between each retry
+    dag_id='Temperature_Forecast_S3_v3',
+    description='DAG to create temperature Forecast Model with Apache Airflow',
+    start_date=datetime.utcnow(),
+    schedule_interval='@daily',
+    concurrency=5,
+    max_active_runs=5, 
+) as dag:
+```
+When a task fails, it is retried `retries` amount of times, without affecting the whole state of the DAG or the other tasks in the DAG itself. This means that a single task will not cause the whole pipeline to fail, and in terms of this research, the robustness is satisfied. A full example of this can be seen in the files that are in the [dags](https://github.com/rristov60/R3E-With-Airflow/tree/main/dags) folder in this repository. All of the DAGs have specified retries and retry_delay.
 
-The next aspect is the **reliability**. In my opinion, as I mentioned before because the unnecessary passing of the data, is slightly decreased, unit tests can be always used to make sure that the code is running properly. How and whether that should be done using Airflow or pure Python, is question of another research.
+Next is **resilience**. To begin with, the resilience means that the pipeline will fail due to an error. The retries here are taken out of consideration since it is assumed that the error is peristent and no amount of retries under the same conditions will fix the issue. Unfortunately, there is no built-in mechanism that allows easy and automatic error handling, but since all of the pipelines are written in Python, the default Python error handling can be used. This is a challenge in itself, and in the pipelines used in this research, no error handling was done, which is out of the scope of this reserach.   
 
-The last aspect of R3E is the **elasticity** aspect. I am not sure how much here can be said except that practically elasticity is non-existent. There is no automatic scaling nor constant event listeners simply because Airflow is not an event-driven tool. If you want to have those capabilities, which you certainly do want to have them when talking about ML pipelines and especially when big data is in question. Airflow is not the right tool for the job. At this point, the question of whether Airflow is a suitable tool to use for R3E for ML pipelines or Big Data ML pipelines in general arises. Let's take a look at the performance as well and then we can conclude.
+**Elasticity** is not something that can be achieved by default with Apache Airflow because Airflow does not offer automatic scaling. The best solution is to have a separate pipeline that creates DAGs dynamically by need. However, since Airflow is not event-driven, some sort of mechanism is required which is going to subside. The most common subside is a sensor(listener). A general demonstration of an S3 sensor(listener) can be found in the following [dag](https://github.com/rristov60/R3E-With-Airflow/blob/main/dags/s3_pipeline_trigerrer.py) in the `dags` folder of this repository. The dag creation can be done in multiple ways, but the most common one is to have a DAG template. This is not into any of the examples in this repository, but the following is an [example](https://docs.astronomer.io/learn/dynamically-generating-dags?tab=traditional#example-generate-dags-from-json-config-files) of how that can be achieved:
+```python
+# TEMPLATE DAG
 
-To begin with, BigData ML systems in general require a lot of resources to handle the data. Now, let's say we have a pipeline where we have three files and when those files are changed, the model needs to be retrained. This is an impossible task to do in one pipeline. So, the proper way is to have a pipeline like on Figure 5. which determines which pipeline will be run depending on which data changed:
+from airflow.decorators import dag
+from airflow.operators.bash import BashOperator
+from pendulum import datetime
 
-#### **Figure 5.** Data listeners
-![Figure 5. Data listeners](./figures/Figure5.png)
 
-As it can be seen, this DAG triggers the appropriate dag on file change. Now the issue arises again from Airflow's inability to share data between tasks and the fact that it loads the data in memory. If we take that the size of one file is 1TB, it would require 1TB of RAM just so the data could be loaded. There is no built-in mechanism for gradually loading or processing data, which means that handling Big Data using Airflow is costly. I am not saying that there are tools that have integrated gradual data processing, but Airflow does not and it is just not the right tool for this kind of use cases. I believe by now there are enough illustrated examples and a conclusion can be made.
+@dag(
+    dag_id=dag_id_to_replace,
+    start_date=datetime(2023, 7, 1),
+    schedule=schedule_to_replace,
+    catchup=False,
+)
+def dag_from_config():
+    BashOperator(
+        task_id="say_hello",
+        bash_command=bash_command_to_replace,
+        env={"ENVVAR": env_var_to_replace},
+    )
+
+
+dag_from_config()
+```
+
+```python
+# DAG config file
+{
+    "dag_id": "dag_file_1",
+    "schedule": "'@daily'",
+    "bash_command": "'echo $ENVVAR'",
+    "env_var": "'Hello! :)'"
+}
+```
+
+```python
+# Dynamic DAG creation
+
+import json
+import os
+import shutil
+import fileinput
+
+
+config_filepath = "include/dag-config/"
+dag_template_filename = "include/dag-template.py"
+
+for filename in os.listdir(config_filepath):
+    f = open(config_filepath + filename)
+    config = json.load(f)
+
+    new_filename = "dags/" + config["dag_id"] + ".py"
+    shutil.copyfile(dag_template_filename, new_filename)
+
+    for line in fileinput.input(new_filename, inplace=True):
+        line = line.replace("dag_id_to_replace", "'" + config["dag_id"] + "'")
+        line = line.replace("schedule_to_replace", config["schedule"])
+        line = line.replace("bash_command_to_replace", config["bash_command"])
+        line = line.replace("env_var_to_replace", config["env_var"])
+        print(line, end="")
+```
+This example can be modified so the creation of a DAG from a template is done by another DAG. 
+
+Last is **reliability**. As demonstrated in the example DAGs, located in [dags](https://github.com/rristov60/R3E-With-Airflow/tree/main/dags), the reliability is achieved by combining all of the other aspects from R3E and smart pipeline design. Something like this cannot be achieved from a single aspect or a single feature. The reliability of the pipeline is increased when all of the R3E mechanisms of Airflow are combined.
+
+Furthermore, even though that is out of the scope of this research, I took a look at the performance, since it is a crucial part of any ML pipeline. Because Big Data ML pipelines work with huge amounts of that, they consume a significant amount of resources. And most of the time those ML pipelines are run by different workers but managed from the same machine. The following practical experiment has a goal to find out whether is more performant to have multiple Big Data ML pipelines consolidated into one or have them as multiple pipelines. As a demonstration, I will use the pipeline shown in Figure 4. whose code can be found [here](https://github.com/rristov60/R3E-With-Airflow/blob/main/dags/s3_pipeline_trigerrer.py):
+
+#### **Figure 4.** Data listeners and pipeline triggers
+![Figure 4. Data listeners and pipeline ](./figures/Figure4.png)
+
+This pipeline "listens" for a file change with a S3 sensor. The files it "listens" for are Big Data files that are used to train ML models. When a file is changed, the appropriate pipeline is run by a certain worker. The pipelines that are triggered are the same pipeline that is shown in Figure 3., but slightly modified to use different data to train the ML model. The ML pipelines or rather the Apache Airflow DAGs can be found as [dag_temperature_forecast_S3.py](https://github.com/rristov60/R3E-With-Airflow/blob/main/dags/dag_temperature_forecast_S3.py), [dag_temperature_forecast_S3_new_data.py](https://github.com/rristov60/R3E-With-Airflow/blob/main/dags/dag_temperature_forecast_S3_new_data.py), and [dag_temperature_forecast_S3_data.py](https://github.com/rristov60/R3E-With-Airflow/blob/main/dags/dag_temperature_forecast_S3_data.py) in the `dags` folder of this repository. When I analyzed the performance between the single pipeline/DAG for multiple ML models vs ML pipeline per ML model, I saw that it doesn't make sense to take the first approach simply because the load is too high on the worker. It is much more expensive to have a single very powerful worker than having multiple less powerful workers. Also, the R3E is much harder to achieve because there are more potential failing points when using the single pipeline approach. A conclusion from this is that it is much more performant and it makes much more sense financially to distribute the workload amongst multiple workers.  
 
 
 ## 4. Conclusion
-To sum up, this reserach explores whether Apache Airflow is the proper tool to achieve R3E for ML pipelines and whether Apache Airflow is a tool that can even be used for Big Data ML pipelines. The short answer to this is no, Apache Airflow is not the right tool for this, but that is just fine because, in the end, Airflow is not even designed to be used for this. It just happens that the Pipelines or so-called DAGs are defined in Python and Python is the most popular language used for ML. Despite this, Airflow is a great tool that offers robust developing, scheduling, and monitoring batch-oriented workflows, like it is stated in their documentation. Just out of curiosity, I asked Chat-GPT the following question: "__I want to build a resilient, robust, and elastic ML pipeline. Now the question is, is Apache Airflow the proper tool for this, and if no, what are the most appropriate tools that are specifically used for this ?__", and after some short conversation, the final answer was this
+To conclude, this research explores whether Apache Airflow is the proper tool to achieve R3E for Big Data ML pipelines. From the challenges presented throughout this document, it can be concluded that Apache Airflow **_can be_** used as a tool to achieve R3E for Big Data ML pipelines. However, when doing further research, other tools might make achieving this much easier and due to the less complexity of achieving some tasks, more performant as well. A good example of such tools is event-driven tools which would allow the elasticity to be achieved much easier. 
 
-> Chat-GPT 3.5 Response:
->
-> Certainly! For beginners looking for an easy-to-use tool for building machine learning pipelines, Prefect is a good choice. It is designed with simplicity in mind, has a Python-native syntax, and offers a straightforward approach to building and orchestrating workflows. Prefect also has good documentation and is gaining traction in the data engineering and machine learning communities.
-
-## Sources that helped this research
-- [R3E -An Approach to Robustness, Reliability, Resilience and Elasticity Engineering for End-to-End Machine Learning Systems](https://www.researchgate.net/publication/341762862_R3E_-An_Approach_to_Robustness_Reliability_Resilience_and_Elasticity_Engineering_for_End-to-End_Machine_Learning_Systems)
-- [Aalto CS-E4660 - Advanced Topics in Software Systems](https://github.com/rdsea/sys4bigml)
-- [Benchmarking big data systems: A survey](https://www.sciencedirect.com/science/article/abs/pii/S0140366419312344)
+## Note
+- This research is an assignment for [Aalto's CS-E4660 - Advanced Topics in Software Systems](https://github.com/rdsea/sys4bigml)
